@@ -1,0 +1,119 @@
+{
+  "app": {
+    "title": "Global Notes",
+    "loading": "Loading..."
+  },
+  "auth": {
+    "login": "Sign in",
+    "logout": "Sign out",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "errors": {
+      "invalidCredentials": "Invalid credentials"
+    }
+  },
+  "nav": {
+    "globalNotes": "Global Notes",
+    "notes": "Notes",
+    "systemUpdates": "System Updates",
+    "manual": "User Manual",
+    "approvals": "Approvals",
+    "inbox": "Review inbox",
+    "users": "Users",
+    "roles": "Roles & permissions",
+    "modules": "Modules",
+    "notifications": "Notifications"
+  },
+  "notes": {
+    "myNotes": "My notes",
+    "newNote": "New note",
+    "title": "Title",
+    "recipients": "Recipients",
+    "recipientsPlaceholder": "Search and select one or more users…",
+    "writeNote": "Write your note... use {'@'} to tag users",
+    "submit": "Submit for approval",
+    "approve": "Approve",
+    "reject": "Reject",
+    "rejectionReason": "Rejection reason",
+    "status": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    }
+  },
+  "systemUpdates": {
+    "newRequest": "New request",
+    "search": "Search by description, module or requester...",
+    "filters": "Filters",
+    "requester": "Requester",
+    "type": "Request type",
+    "module": "Affected module",
+    "selectModule": "Select module...",
+    "priority": "Priority",
+    "description": "Description",
+    "descriptionPlaceholder": "Detailed description of the issue or enhancement...",
+    "bugFix": "Bug Fix",
+    "enhancement": "Enhancement",
+    "review": "Review",
+    "assign": "Assign",
+    "approve": "Approve",
+    "reject": "Reject",
+    "complete": "Mark completed",
+    "inboxTabs": {
+      "toReview": "To review",
+      "readyToImplement": "Ready to implement",
+      "completed": "Completed",
+      "rejected": "Rejected",
+      "all": "All"
+    },
+    "priorities": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "CRITICAL": "Critical"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "DEV_APPROVED": "Dev approved",
+      "DEV_REJECTED": "Dev rejected",
+      "ADMIN_APPROVED": "Approved",
+      "ADMIN_REJECTED": "Rejected",
+      "COMPLETED": "Completed"
+    }
+  },
+  "manual": {
+    "title": "User Manual",
+    "search": "Search the manual...",
+    "newDocument": "New document",
+    "publish": "Publish",
+    "draft": "Draft",
+    "published": "Published",
+    "changelog": "Changelog",
+    "categories": "Categories"
+  },
+  "users": {
+    "title": "Users",
+    "newUser": "New user",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "active": "Active",
+    "inactive": "Inactive",
+    "save": "Save"
+  },
+  "roles": {
+    "title": "Roles & permissions",
+    "permission": "Permission",
+    "save": "Save changes"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "actions": "Actions",
+    "search": "Search"
+  }
+}

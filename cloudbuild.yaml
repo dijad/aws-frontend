@@ -1,16 +1,12 @@
-# Cloud Build: build Nuxt image (with API URLs) → push → deploy Cloud Run (web)
-#
-# Deploy backend first, then pass its URL here:
-#   gcloud builds submit --config=cloudbuild.yaml \
-#     --substitutions=_REGION=us-central1,_SERVICE=aws-frontend,_API_BASE=https://aws-api-xxx.run.app/api,_WS_BASE=https://aws-api-xxx.run.app
+# Cloud Build: build Nuxt (API URLs baked in) → push → deploy Cloud Run (web)
 
 substitutions:
   _REGION: australia-southeast1
   _SERVICE: aws-frontend
   _AR_REPO: aws
   _IMAGE_NAME: web
-  _API_BASE: ''
-  _WS_BASE: ''
+  _API_BASE: https://aws-api-281263231105.australia-southeast1.run.app/api
+  _WS_BASE: https://aws-api-281263231105.australia-southeast1.run.app
   _AUTH_DISABLED: 'false'
 
 options:
@@ -39,21 +35,26 @@ steps:
       - push
       - --all-tags
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}
+    waitFor: ['build']
 
   - id: deploy
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - run
-      - deploy
-      - ${_SERVICE}
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$BUILD_ID
-      - --region=${_REGION}
-      - --platform=managed
-      - --port=8080
-      - --allow-unauthenticated
-      - --min-instances=0
-      - --max-instances=10
+      - -ceu
+      - |
+        gcloud run deploy "${_SERVICE}" \
+          --project="${PROJECT_ID}" \
+          --image="${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_IMAGE_NAME}:latest" \
+          --region="${_REGION}" \
+          --platform=managed \
+          --port=8080 \
+          --allow-unauthenticated \
+          --min-instances=0 \
+          --max-instances=10 \
+          --timeout=300 \
+          --quiet
+    waitFor: ['push']
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$BUILD_ID

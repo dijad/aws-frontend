@@ -3,6 +3,7 @@ import { AUTH_DISABLED } from '~/config/auth-dev';
 /** Runs on every route; enforces `definePageMeta({ permissions: [...] })` when set. */
 export default defineNuxtRouteMiddleware((to) => {
   if (AUTH_DISABLED) return;
+  if (import.meta.server) return;
 
   const required = to.meta.permissions as string[] | undefined;
   if (!required?.length) return;

@@ -17,7 +17,8 @@ ENV NUXT_PUBLIC_API_BASE=$NUXT_PUBLIC_API_BASE
 ENV NUXT_PUBLIC_WS_BASE=$NUXT_PUBLIC_WS_BASE
 ENV NUXT_PUBLIC_AUTH_DISABLED=$NUXT_PUBLIC_AUTH_DISABLED
 
-RUN npm run build
+RUN npm run build \
+  && ln -sf ../../public /app/.output/server/chunks/public
 
 FROM node:20-alpine AS runner
 WORKDIR /app

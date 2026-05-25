@@ -10,19 +10,33 @@ const password = ref('Admin123!');
 const loading = ref(false);
 const error = ref<string | null>(null);
 
+function resolveRedirect(): string {
+  const raw = (route.query.redirect as string | undefined) ?? '/global-notes';
+  if (!raw || raw === '/' || raw.startsWith('/login')) return '/global-notes';
+  return raw;
+}
+
 async function submit() {
   loading.value = true;
   error.value = null;
   try {
     await auth.login(email.value, password.value);
-    const redirect = (route.query.redirect as string | undefined) ?? '/';
-    await navigateTo(redirect);
+    await navigateTo(resolveRedirect());
   } catch (e: unknown) {
-    const status = (e as { status?: number }).status;
+    const err = e as {
+      status?: number;
+      statusCode?: number;
+      data?: { message?: string | string[] };
+      message?: string;
+    };
+    const status = err.status ?? err.statusCode;
+    const apiMessage = Array.isArray(err.data?.message)
+      ? err.data.message.join(', ')
+      : err.data?.message;
     error.value =
       status === 401
         ? t('auth.errors.invalidCredentials')
-        : (e as Error).message ?? 'Error';
+        : apiMessage ?? err.message ?? 'Unable to sign in';
   } finally {
     loading.value = false;
   }

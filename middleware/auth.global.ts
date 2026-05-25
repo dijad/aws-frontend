@@ -8,6 +8,9 @@ export default defineNuxtRouteMiddleware((to) => {
     return;
   }
 
+  // Tokens live in localStorage; server cannot read them during SSR navigations.
+  if (import.meta.server) return;
+
   const auth = useAuthStore();
   if (import.meta.client && auth.user === null && auth.accessToken === null) {
     auth.hydrateFromStorage();

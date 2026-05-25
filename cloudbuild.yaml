@@ -5,7 +5,7 @@
 #     --substitutions=_REGION=us-central1,_SERVICE=aws-frontend,_API_BASE=https://aws-api-xxx.run.app/api,_WS_BASE=https://aws-api-xxx.run.app
 
 substitutions:
-  _REGION: us-central1
+  _REGION: australia-southeast1
   _SERVICE: aws-frontend
   _AR_REPO: aws
   _IMAGE_NAME: web
@@ -28,7 +28,7 @@ steps:
       - --build-arg
       - NUXT_PUBLIC_AUTH_DISABLED=${_AUTH_DISABLED}
       - -t
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$SHORT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$BUILD_ID
       - -t
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:latest
       - .
@@ -47,7 +47,7 @@ steps:
       - run
       - deploy
       - ${_SERVICE}
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$SHORT_SHA
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$BUILD_ID
       - --region=${_REGION}
       - --platform=managed
       - --port=8080
@@ -56,5 +56,5 @@ steps:
       - --max-instances=10
 
 images:
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$BUILD_ID
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:latest

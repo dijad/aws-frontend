@@ -22,6 +22,12 @@ npm run dev                # http://localhost:3000
 Default seeded admin (created by the backend `seed` script):
 `admin@example.com` / `Admin123!`.
 
+## GCP (Cloud Run)
+
+`Dockerfile` + `cloudbuild.yaml` en este repo. Guía completa en el backend: [docs/gcp-deploy.md](https://github.com/dijad/aws-backend/blob/main/docs/gcp-deploy.md).
+
+Build args requeridos: `NUXT_PUBLIC_API_BASE`, `NUXT_PUBLIC_WS_BASE` (URL del API desplegado).
+
 ## Layout
 
 ```

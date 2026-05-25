@@ -1,0 +1,60 @@
+# Cloud Build: build Nuxt image (with API URLs) → push → deploy Cloud Run (web)
+#
+# Deploy backend first, then pass its URL here:
+#   gcloud builds submit --config=cloudbuild.yaml \
+#     --substitutions=_REGION=us-central1,_SERVICE=aws-frontend,_API_BASE=https://aws-api-xxx.run.app/api,_WS_BASE=https://aws-api-xxx.run.app
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: aws-frontend
+  _AR_REPO: aws
+  _IMAGE_NAME: web
+  _API_BASE: ''
+  _WS_BASE: ''
+  _AUTH_DISABLED: 'false'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --build-arg
+      - NUXT_PUBLIC_API_BASE=${_API_BASE}
+      - --build-arg
+      - NUXT_PUBLIC_WS_BASE=${_WS_BASE}
+      - --build-arg
+      - NUXT_PUBLIC_AUTH_DISABLED=${_AUTH_DISABLED}
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$SHORT_SHA
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --port=8080
+      - --allow-unauthenticated
+      - --min-instances=0
+      - --max-instances=10
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:latest

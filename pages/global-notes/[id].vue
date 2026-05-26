@@ -5,12 +5,14 @@ const { apiFetch } = useApi();
 const { can } = usePermissions();
 const route = useRoute();
 const auth = useAuthStore();
+const notesRealtime = useNotesRealtimeStore();
 const id = route.params.id as string;
 
 const note = ref<NoteDto | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const showRejectDialog = ref(false);
+const showDeleteDialog = ref(false);
 const rejectionReason = ref('');
 const acting = ref(false);
 const newComment = ref('');
@@ -61,6 +63,30 @@ async function addComment() {
   newComment.value = '';
   await load();
 }
+
+async function confirmDeleteNote() {
+  if (!note.value) return;
+  acting.value = true;
+  try {
+    await apiFetch(`/notes/${note.value.id}`, { method: 'DELETE' });
+    const scopes = [
+      'mine',
+      'mentions',
+      'received',
+      'pending',
+      'approved',
+      'rejected',
+      'all',
+    ] as const;
+    for (const scope of scopes) {
+      notesRealtime.removeFromScope(scope, note.value.id);
+    }
+    showDeleteDialog.value = false;
+    await navigateTo('/global-notes');
+  } finally {
+    acting.value = false;
+  }
+}
 </script>
 
 <template>
@@ -88,26 +114,39 @@ async function addComment() {
 
         <h1 class="note-title">{{ note.title }}</h1>
 
-        <div v-if="note.mentions.length || note.recipients.length" class="note-tags">
-          <span v-if="note.mentions.length" class="tag">
-            @{{ note.mentions.map((m) => m.user.name).join(', @') }}
-          </span>
-          <span v-if="note.recipients.length" class="tag">
-            → {{ note.recipients.map((r) => r.user.name).join(', ') }}
-          </span>
+        <div v-if="note.mentions.length || note.recipients.length" class="note-meta">
+          <div class="note-tags">
+            <span v-if="note.mentions.length" class="tag">
+              @{{ note.mentions.map((m) => m.user.name).join(', @') }}
+            </span>
+            <span v-if="note.recipients.length" class="tag">
+              → {{ note.recipients.map((r) => r.user.name).join(', ') }}
+            </span>
+          </div>
         </div>
 
         <div class="note-body">
           <NotesNoteContentViewer :content="note.contentJson" />
         </div>
 
-        <div v-if="canApprove" class="note-actions">
-          <button class="btn-secondary" :disabled="acting" @click="showRejectDialog = true">Reject</button>
-          <button class="btn-primary" :disabled="acting" @click="approve">Approve</button>
+        <div class="note-actions">
+          <button
+            v-if="can('NOTE_DELETE')"
+            type="button"
+            class="btn-danger"
+            :disabled="acting"
+            @click="showDeleteDialog = true"
+          >
+            Delete
+          </button>
+          <div v-if="canApprove" class="note-actions-approve">
+            <button class="btn-secondary" :disabled="acting" @click="showRejectDialog = true">Reject</button>
+            <button class="btn-primary" :disabled="acting" @click="approve">Approve</button>
+          </div>
         </div>
       </article>
 
-      <section v-if="note.subNotes.length" class="animate-reveal" data-delay="2">
+      <section v-if="note.subNotes.length" class="animate-reveal comments-panel card" data-delay="2">
         <p class="section-label">Comments · {{ note.subNotes.length }}</p>
         <ul class="comments">
           <li v-for="s in note.subNotes" :key="s.id" class="comment" :class="s.type === 'REJECTION_REASON' && 'comment--rejection'">
@@ -128,6 +167,15 @@ async function addComment() {
         </div>
       </form>
     </template>
+
+    <UiConfirmDeleteDialog
+      v-if="note"
+      v-model:open="showDeleteDialog"
+      :title="$t('confirmDelete.titleNote')"
+      :item-name="note.title"
+      :loading="acting"
+      @confirm="confirmDeleteNote"
+    />
 
     <Teleport to="body">
       <div v-if="showRejectDialog" class="modal-overlay fixed inset-0 z-40 flex items-center justify-center p-4">
@@ -171,6 +219,8 @@ async function addComment() {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid var(--rule-soft);
 }
 .note-author { display: flex; align-items: center; gap: 0.625rem; }
 .note-avatar {
@@ -195,17 +245,28 @@ async function addComment() {
   color: var(--ink-strong);
   line-height: 1.25;
 }
+.note-meta {
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: var(--surface-hover);
+  border: 1px solid var(--rule-soft);
+}
 .note-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .tag {
   display: inline-flex;
-  padding: 0.25rem 0.625rem;
+  padding: 0.325rem 0.625rem;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--ink-soft);
+  color: var(--ink);
   background: var(--surface-card);
   border-radius: 6px;
+  border: 1px solid var(--rule-soft);
 }
 .note-body {
+  padding: 1rem 1.125rem;
+  border-radius: 10px;
+  background: var(--surface-card);
+  border: 1px solid var(--rule-soft);
   font-size: 0.9375rem;
   line-height: 1.65;
   color: var(--ink);
@@ -214,21 +275,33 @@ async function addComment() {
   padding-top: 1rem;
   border-top: 1px solid var(--rule-soft);
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.note-actions-approve {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
 }
 
 .section-label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--ink);
-  margin-bottom: 0.625rem;
+  color: var(--ink-strong);
+  margin-bottom: 0.875rem;
+}
+.comments-panel {
+  padding: 1rem;
+  border: 1px solid var(--rule-soft);
 }
 .comments { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
 .comment {
   padding: 1rem 1.125rem;
   background: var(--surface-card);
   border-radius: 10px;
+  border: 1px solid var(--rule-soft);
 }
 .comment--rejection {
   background: var(--danger-soft);

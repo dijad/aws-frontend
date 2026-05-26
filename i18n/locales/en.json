@@ -31,7 +31,7 @@
     "title": "Title",
     "recipients": "Recipients",
     "recipientsPlaceholder": "Search and select one or more users…",
-    "writeNote": "Write your note... use {'@'} to tag users",
+    "writeNote": "Write your note... use {'@'} for people, {'#'} to cite notes",
     "submit": "Submit for approval",
     "approve": "Approve",
     "reject": "Reject",
@@ -55,6 +55,16 @@
     "descriptionPlaceholder": "Detailed description of the issue or enhancement...",
     "bugFix": "Bug Fix",
     "enhancement": "Enhancement",
+    "form": {
+      "titlePlaceholder": "What needs to change?",
+      "bugHint": "Something broken or incorrect",
+      "enhancementHint": "New capability or improvement",
+      "descriptionHint": "Include steps to reproduce, expected behavior, or acceptance criteria.",
+      "reviewNote": "Dev and Admin will review before implementation.",
+      "charsLeft": "characters left",
+      "creating": "Creating…",
+      "submit": "Create request"
+    },
     "review": "Review",
     "assign": "Assign",
     "approve": "Approve",
@@ -106,6 +116,13 @@
     "title": "Roles & permissions",
     "permission": "Permission",
     "save": "Save changes"
+  },
+  "confirmDelete": {
+    "titleNote": "Delete note",
+    "titleRequest": "Delete request",
+    "titleUser": "Delete user",
+    "aboutToDelete": "You are about to delete",
+    "logicalDeleteHint": "This is a logical delete. The item will be hidden from lists but kept in the database."
   },
   "common": {
     "save": "Save",

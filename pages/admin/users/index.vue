@@ -8,8 +8,13 @@ definePageMeta({
 const { apiFetch } = useApi();
 const { can } = usePermissions();
 
+const { t } = useI18n();
+
 const users = ref<UserSummary[]>([]);
 const loading = ref(false);
+const showDeleteDialog = ref(false);
+const userToDelete = ref<UserSummary | null>(null);
+const deleting = ref(false);
 
 async function load() {
   loading.value = true;
@@ -21,10 +26,22 @@ async function load() {
 }
 onMounted(load);
 
-async function softDelete(u: UserSummary) {
-  if (!confirm(`Delete ${u.name}?`)) return;
-  await apiFetch(`/users/${u.id}`, { method: 'DELETE' });
-  await load();
+function askDelete(u: UserSummary) {
+  userToDelete.value = u;
+  showDeleteDialog.value = true;
+}
+
+async function confirmDeleteUser() {
+  if (!userToDelete.value) return;
+  deleting.value = true;
+  try {
+    await apiFetch(`/users/${userToDelete.value.id}`, { method: 'DELETE' });
+    showDeleteDialog.value = false;
+    userToDelete.value = null;
+    await load();
+  } finally {
+    deleting.value = false;
+  }
 }
 </script>
 
@@ -93,7 +110,7 @@ async function softDelete(u: UserSummary) {
                   class="btn-icon btn-icon--danger"
                   title="Delete"
                   :aria-label="`Delete ${u.name}`"
-                  @click="softDelete(u)"
+                  @click="askDelete(u)"
                 >
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M3 6h18" />
@@ -118,6 +135,15 @@ async function softDelete(u: UserSummary) {
       </table>
       </div>
     </template>
+
+    <UiConfirmDeleteDialog
+      v-if="userToDelete"
+      v-model:open="showDeleteDialog"
+      :title="t('confirmDelete.titleUser')"
+      :item-name="userToDelete.name"
+      :loading="deleting"
+      @confirm="confirmDeleteUser"
+    />
   </div>
 </template>
 

@@ -9,7 +9,7 @@ export default defineNuxtPlugin(() => {
   }
 
   auth.hydrateFromStorage();
-  if (auth.accessToken && !auth.user) {
+  if (auth.accessToken) {
     auth.fetchMe().catch(() => auth.clear());
   }
 });

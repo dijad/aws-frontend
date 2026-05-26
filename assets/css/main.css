@@ -471,6 +471,22 @@ html[data-theme='dark'] {
   font-weight: 500;
   border-radius: 4px;
 }
+.note-mention {
+  display: inline;
+  padding: 1px 6px;
+  background: var(--brand-dim);
+  color: var(--brand-text);
+  font-weight: 600;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.note-mention:hover {
+  text-decoration: underline;
+}
+.ProseMirror a.note-mention {
+  color: var(--brand-text);
+}
 
 /* ── Animations ─────────────────────────────────────────────────── */
 .animate-fade-in { animation: fadeIn 0.3s ease forwards; }

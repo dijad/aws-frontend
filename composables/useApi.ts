@@ -1,3 +1,5 @@
+import { formatApiError } from '~/utils/api-error';
+
 type HttpMethod =
   | 'GET'
   | 'POST'
@@ -67,7 +69,15 @@ export const useApi = () => {
         headers.Authorization = `Bearer ${auth.accessToken}`;
         return await exec();
       }
-      throw err;
+      const apiErr = new Error(formatApiError(err)) as Error & {
+        status?: number;
+        statusCode?: number;
+        data?: unknown;
+      };
+      apiErr.status = status;
+      apiErr.statusCode = status;
+      apiErr.data = (err as { data?: unknown }).data;
+      throw apiErr;
     }
   }
 

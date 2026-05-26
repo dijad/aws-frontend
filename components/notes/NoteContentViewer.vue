@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import StarterKit from '@tiptap/starter-kit';
 import Mention from '@tiptap/extension-mention';
+import { createNoteMentionReadonlyExtension } from './noteMentionExtension';
 
 const props = defineProps<{
   content: Record<string, unknown> | string | null | undefined;
@@ -17,6 +18,7 @@ const editor = useEditor({
         return `${options.suggestion.char}${(node.attrs as { id: string; label?: string }).label ?? node.attrs.id}`;
       },
     }),
+    createNoteMentionReadonlyExtension(),
   ],
 });
 
@@ -31,7 +33,17 @@ onBeforeUnmount(() => editor.value?.destroy());
 </script>
 
 <template>
-  <div class="prose prose-sm max-w-none">
+  <div class="note-content-viewer prose prose-sm max-w-none">
     <TiptapEditorContent :editor="editor" />
   </div>
 </template>
+
+<style scoped>
+.note-content-viewer :deep(.note-mention) {
+  cursor: pointer;
+  text-decoration: none;
+}
+.note-content-viewer :deep(.note-mention:hover) {
+  text-decoration: underline;
+}
+</style>

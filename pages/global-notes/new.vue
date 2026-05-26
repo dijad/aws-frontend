@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import type { UserLite } from '~/types/api';
+import type { CitableNoteLite, UserLite } from '~/types/api';
 
 definePageMeta({
   permissions: ['NOTE_CREATE'],
 });
 
 const { apiFetch } = useApi();
+
+async function searchCitableNotes(query: string) {
+  const q = query.trim();
+  const path = q
+    ? `/notes/search/citable?q=${encodeURIComponent(q)}`
+    : '/notes/search/citable';
+  return apiFetch<CitableNoteLite[]>(path);
+}
 const router = useRouter();
 const auth = useAuthStore();
 const { can } = usePermissions();
@@ -57,7 +65,7 @@ async function submit() {
     });
     await router.push('/global-notes');
   } catch (e: unknown) {
-    error.value = ((e as { data?: { message?: string } }).data?.message) ?? (e as Error).message ?? 'Error';
+    error.value = (e as Error).message ?? 'Error';
   } finally {
     saving.value = false;
   }
@@ -74,7 +82,7 @@ async function submit() {
     <UiAppPageHeader>
       <h1 class="page-title">New note</h1>
       <p class="page-subtitle">
-        Tag users with <span class="kbd">@</span> and select recipients.
+        Tag users with <span class="kbd">@</span>, cite notes with <span class="kbd">#</span>, and select recipients.
         <template v-if="skipsApproval">Your note will be published immediately.</template>
         <template v-else>The note stays pending until approved.</template>
       </p>
@@ -88,7 +96,12 @@ async function submit() {
 
       <div>
         <label class="label">Content</label>
-        <NotesNoteEditor v-model="editor" :users="candidates" :placeholder="$t('notes.writeNote')" />
+        <NotesNoteEditor
+          v-model="editor"
+          :users="candidates"
+          :search-citable-notes="searchCitableNotes"
+          :placeholder="$t('notes.writeNote')"
+        />
       </div>
 
       <div>

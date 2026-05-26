@@ -3,11 +3,15 @@ import StarterKit from '@tiptap/starter-kit';
 import Mention from '@tiptap/extension-mention';
 import Placeholder from '@tiptap/extension-placeholder';
 import suggestion from './mentionSuggestion';
-import type { UserLite } from '~/types/api';
+import noteMentionSuggestion from './noteMentionSuggestion';
+import { createNoteMentionExtension } from './noteMentionExtension';
+import type { UserLite, CitableNoteLite } from '~/types/api';
+import { collectUserMentionIds } from '~/utils/note-content';
 
 const props = defineProps<{
   modelValue: { json: Record<string, unknown> | null; text: string; mentionedUserIds: string[] };
   users: UserLite[];
+  searchCitableNotes: (query: string) => Promise<CitableNoteLite[]>;
   placeholder?: string;
   disabled?: boolean;
 }>();
@@ -32,16 +36,19 @@ const editor = useEditor({
     }),
     Mention.configure({
       HTMLAttributes: { class: 'mention' },
-      renderText({ options, node }) {
-        return `${options.suggestion.char}${(node.attrs as { id: string; label?: string }).label ?? node.attrs.id}`;
+      renderText({ node }) {
+        const label =
+          (node.attrs as { id: string; label?: string }).label ?? node.attrs.id;
+        return `@${label}`;
       },
       suggestion: suggestion(() => props.users),
     }),
+    createNoteMentionExtension(noteMentionSuggestion(props.searchCitableNotes)),
   ],
   onUpdate({ editor: e }) {
     const json = e.getJSON();
     const text = e.getText();
-    const mentioned = collectMentionIds(json);
+    const mentioned = collectUserMentionIds(json);
     emit('update:modelValue', {
       json: json as Record<string, unknown>,
       text,
@@ -58,14 +65,6 @@ watch(
 onBeforeUnmount(() => {
   editor.value?.destroy();
 });
-
-function collectMentionIds(node: unknown, acc: Set<string> = new Set()): string[] {
-  if (!node || typeof node !== 'object') return Array.from(acc);
-  const n = node as { type?: string; attrs?: { id?: string }; content?: unknown[] };
-  if (n.type === 'mention' && n.attrs?.id) acc.add(n.attrs.id);
-  if (Array.isArray(n.content)) n.content.forEach((c) => collectMentionIds(c, acc));
-  return Array.from(acc);
-}
 </script>
 
 <template>

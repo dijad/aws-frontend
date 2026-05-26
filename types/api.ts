@@ -62,6 +62,12 @@ export interface PermissionDto {
 
 export type NoteStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
+export interface CitableNoteLite {
+  id: string;
+  title: string;
+  status: NoteStatus;
+}
+
 export interface NoteSubNote {
   id: string;
   noteId: string;
@@ -90,6 +96,7 @@ export interface NoteDto {
   status: NoteStatus;
   reviewedById: string | null;
   reviewedAt: string | null;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
   author: UserLite;
@@ -139,6 +146,7 @@ export interface SystemUpdateDto {
   adminReviewedById: string | null;
   adminReviewedAt: string | null;
   completedAt: string | null;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
   requester: UserLite;

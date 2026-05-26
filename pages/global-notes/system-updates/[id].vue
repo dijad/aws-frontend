@@ -10,6 +10,7 @@ const item = ref<SystemUpdateDto | null>(null);
 const loading = ref(false);
 const acting = ref(false);
 const showRejectDialog = ref(false);
+const showDeleteDialog = ref(false);
 const rejectAs = ref<'dev' | 'admin'>('admin');
 const reason = ref('');
 const newComment = ref('');
@@ -115,6 +116,18 @@ async function addComment() {
   newComment.value = '';
   await load();
 }
+
+async function confirmDeleteRequest() {
+  if (!item.value) return;
+  acting.value = true;
+  try {
+    await apiFetch(`/system-updates/${item.value.id}`, { method: 'DELETE' });
+    showDeleteDialog.value = false;
+    await navigateTo('/global-notes/system-updates');
+  } finally {
+    acting.value = false;
+  }
+}
 </script>
 
 <template>
@@ -156,7 +169,17 @@ async function addComment() {
           {{ item.description }}
         </p>
 
-        <div class="mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
+        <div class="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
+          <button
+            v-if="can('SYSTEM_UPDATE_DELETE')"
+            type="button"
+            class="btn-danger"
+            :disabled="acting"
+            @click="showDeleteDialog = true"
+          >
+            Delete
+          </button>
+          <div class="flex flex-wrap justify-end gap-2" :class="!can('SYSTEM_UPDATE_DELETE') && 'ml-auto w-full'">
           <button
             v-if="canDevReview"
             class="btn-secondary"
@@ -199,6 +222,7 @@ async function addComment() {
           >
             {{ $t('systemUpdates.complete') }}
           </button>
+          </div>
         </div>
       </div>
 
@@ -238,10 +262,18 @@ async function addComment() {
         </div>
       </form>
 
+      <UiConfirmDeleteDialog
+        v-model:open="showDeleteDialog"
+        :title="$t('confirmDelete.titleRequest')"
+        :item-name="item.title"
+        :loading="acting"
+        @confirm="confirmDeleteRequest"
+      />
+
       <Teleport to="body">
         <div
           v-if="showRejectDialog"
-          class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+          class="modal-overlay fixed inset-0 z-40 flex items-center justify-center p-4"
         >
           <div class="card w-full max-w-md p-6">
             <h3 class="text-lg font-semibold">Reject request</h3>

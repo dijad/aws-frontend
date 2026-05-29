@@ -115,12 +115,17 @@
   "roles": {
     "title": "Roles & permissions",
     "permission": "Permission",
-    "save": "Save changes"
+    "save": "Save changes",
+    "editRole": "Edit role",
+    "deleteRole": "Delete role",
+    "editHint": "Changing the name updates the code for custom roles. System role codes stay fixed.",
+    "deleteBlockedUsers": "Reassign or remove users from this role before deleting it."
   },
   "confirmDelete": {
     "titleNote": "Delete note",
     "titleRequest": "Delete request",
     "titleUser": "Delete user",
+    "titleRole": "Delete role",
     "aboutToDelete": "You are about to delete",
     "logicalDeleteHint": "This is a logical delete. The item will be hidden from lists but kept in the database."
   },

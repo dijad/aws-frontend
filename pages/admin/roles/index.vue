@@ -7,6 +7,7 @@ definePageMeta({
 });
 
 const { apiFetch } = useApi();
+const { t } = useI18n();
 
 const roles = ref<RoleDto[]>([]);
 const permissions = ref<PermissionDto[]>([]);
@@ -20,8 +21,16 @@ const permSearch = ref('');
 const selectedRoleId = ref<string | null>(null);
 const collapsedGroups = ref<Set<string>>(new Set());
 const showCreateModal = ref(false);
+const showEditModal = ref(false);
+const showDeleteDialog = ref(false);
 const creating = ref(false);
+const updating = ref(false);
+const deleting = ref(false);
 const newRole = reactive({
+  name: '',
+  description: '',
+});
+const editRoleForm = reactive({
   name: '',
   description: '',
 });
@@ -216,6 +225,97 @@ async function load() {
   }
 }
 
+function openEditModal() {
+  const role = selectedRole.value;
+  if (!role) return;
+  if (dirty.value) {
+    const ok = confirm(
+      'This role has unsaved permission changes. Discard them and edit the role?',
+    );
+    if (!ok) return;
+  }
+  editRoleForm.name = role.name;
+  editRoleForm.description = role.description ?? '';
+  error.value = null;
+  showEditModal.value = true;
+}
+
+function closeEditModal() {
+  if (updating.value) return;
+  showEditModal.value = false;
+}
+
+async function saveRoleDetails() {
+  const role = selectedRole.value;
+  if (!role) return;
+  const name = editRoleForm.name.trim();
+  if (!name) {
+    error.value = 'Name is required.';
+    return;
+  }
+  updating.value = true;
+  error.value = null;
+  try {
+    const updated = await apiFetch<RoleDto>(`/roles/${role.id}`, {
+      method: 'PATCH',
+      body: {
+        name,
+        description: editRoleForm.description.trim() || null,
+      },
+    });
+    const idx = roles.value.findIndex((r) => r.id === role.id);
+    if (idx !== -1) roles.value[idx] = updated;
+    roles.value = [...roles.value].sort((a, b) => a.name.localeCompare(b.name));
+    showEditModal.value = false;
+    success.value = `Role “${updated.name}” updated.`;
+  } catch (e: unknown) {
+    error.value =
+      ((e as { data?: { message?: string } }).data?.message) ??
+      (e as Error).message ??
+      'Failed to update role';
+  } finally {
+    updating.value = false;
+  }
+}
+
+function askDeleteRole() {
+  const role = selectedRole.value;
+  if (!role || role.isSystem) return;
+  if (dirty.value) {
+    const ok = confirm(
+      'This role has unsaved permission changes. Discard them and delete the role?',
+    );
+    if (!ok) return;
+  }
+  error.value = null;
+  showDeleteDialog.value = true;
+}
+
+async function confirmDeleteRole() {
+  const role = selectedRole.value;
+  if (!role) return;
+  deleting.value = true;
+  error.value = null;
+  try {
+    await apiFetch(`/roles/${role.id}`, { method: 'DELETE' });
+    roles.value = roles.value.filter((r) => r.id !== role.id);
+    showDeleteDialog.value = false;
+    selectedRoleId.value = null;
+    draft.value = new Set();
+    savedSnapshot.value = new Set();
+    success.value = `Role “${role.name}” deleted.`;
+    if (roles.value.length > 0) selectRole(roles.value[0]);
+  } catch (e: unknown) {
+    error.value =
+      ((e as { data?: { message?: string } }).data?.message) ??
+      (e as Error).message ??
+      'Failed to delete role';
+    showDeleteDialog.value = false;
+  } finally {
+    deleting.value = false;
+  }
+}
+
 async function save() {
   const role = selectedRole.value;
   if (!role || !dirty.value) return;
@@ -323,6 +423,24 @@ onMounted(load);
               </p>
             </div>
             <div class="perms-toolbar__actions">
+              <button
+                type="button"
+                class="btn-secondary text-xs"
+                title="Edit name and description"
+                @click="openEditModal"
+              >
+                {{ t('common.edit') }}
+              </button>
+              <button
+                v-if="!selectedRole.isSystem"
+                type="button"
+                class="btn-secondary text-xs btn-secondary--danger"
+                title="Delete role"
+                :disabled="deleting"
+                @click="askDeleteRole"
+              >
+                {{ t('common.delete') }}
+              </button>
               <button
                 type="button"
                 class="btn-secondary text-xs"
@@ -503,6 +621,72 @@ onMounted(load);
         </div>
       </div>
     </Teleport>
+
+    <Teleport to="body">
+      <div
+        v-if="showEditModal && selectedRole"
+        class="modal-overlay fixed inset-0 z-40 flex items-center justify-center p-4"
+        @click.self="closeEditModal"
+      >
+        <div class="modal-panel w-full max-w-md p-6 space-y-4" role="dialog" aria-labelledby="edit-role-title">
+          <div>
+            <h3 id="edit-role-title" class="text-lg font-semibold" style="color: var(--ink-strong); letter-spacing: -0.02em">
+              {{ t('roles.editRole') }}
+            </h3>
+            <p class="text-sm mt-1" style="color: var(--ink-soft)">
+              {{ t('roles.editHint') }}
+            </p>
+          </div>
+          <div>
+            <label class="label" for="edit-role-name">Name</label>
+            <input
+              id="edit-role-name"
+              v-model="editRoleForm.name"
+              required
+              maxlength="80"
+              class="input"
+              autocomplete="off"
+            />
+          </div>
+          <div>
+            <label class="label" for="edit-role-desc">Description (optional)</label>
+            <textarea
+              id="edit-role-desc"
+              v-model="editRoleForm.description"
+              rows="2"
+              maxlength="280"
+              class="input"
+            />
+          </div>
+          <p v-if="selectedRole.isSystem" class="text-xs" style="color: var(--ink-faint)">
+            System role: code <span class="font-mono">{{ selectedRole.code }}</span> cannot change.
+          </p>
+          <div v-if="error && showEditModal" class="alert alert--error">{{ error }}</div>
+          <div class="flex justify-end gap-2">
+            <button type="button" class="btn-secondary" :disabled="updating" @click="closeEditModal">
+              {{ t('common.cancel') }}
+            </button>
+            <button
+              type="button"
+              class="btn-primary"
+              :disabled="updating || !editRoleForm.name.trim()"
+              @click="saveRoleDetails"
+            >
+              {{ updating ? t('app.loading') : t('common.save') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <UiConfirmDeleteDialog
+      v-if="selectedRole && !selectedRole.isSystem"
+      v-model:open="showDeleteDialog"
+      :title="t('confirmDelete.titleRole')"
+      :item-name="selectedRole.name"
+      :loading="deleting"
+      @confirm="confirmDeleteRole"
+    />
   </div>
 </template>
 
@@ -659,6 +843,12 @@ onMounted(load);
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+.btn-secondary--danger {
+  color: var(--danger);
+}
+.btn-secondary--danger:hover:not(:disabled) {
+  background: var(--danger-soft);
 }
 .perms-filters {
   display: flex;

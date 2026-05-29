@@ -59,7 +59,8 @@ html[data-theme='light'] {
   --text-secondary: var(--ink-soft);
   --text-muted: var(--ink-faint);
   --hover-bg: var(--surface-hover);
-  --input-bg: #f3f4f6;
+  --input-bg: #eef0f4;
+  --input-border: rgba(15, 23, 42, 0.14);
   --brand: var(--accent);
   --brand-dim: var(--accent-soft);
   --brand-text: var(--accent-text);
@@ -124,7 +125,8 @@ html[data-theme='dark'] {
   --text-secondary: var(--ink-soft);
   --text-muted: var(--ink-faint);
   --hover-bg: var(--surface-hover);
-  --input-bg: var(--surface-card);
+  --input-bg: #12121a;
+  --input-border: rgba(255, 255, 255, 0.14);
   --brand: var(--accent);
   --brand-dim: var(--accent-soft);
   --brand-text: var(--accent-text);
@@ -266,19 +268,20 @@ html[data-theme='dark'] {
     display: block;
     width: 100%;
     padding: 0.625rem 0.875rem;
-    background: var(--surface-card);
-    border: 0;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
     border-radius: 8px;
     color: var(--ink);
     font-size: 0.9375rem;
     font-family: inherit;
-    transition: background 0.15s, box-shadow 0.15s;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
   }
   .input::placeholder { color: var(--ink-faint); }
   .input:focus {
     outline: none;
     background: var(--surface);
-    box-shadow: 0 0 0 2px var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--input-border));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
   }
   .input:disabled { opacity: 0.5; cursor: not-allowed; }
   select.input {
@@ -443,18 +446,19 @@ html[data-theme='dark'] {
 .ProseMirror {
   min-height: 180px;
   padding: 0.875rem 1rem;
-  background: var(--surface-card);
-  border: 0;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   font-size: 0.9375rem;
   line-height: 1.6;
   color: var(--ink);
   outline: none;
-  transition: background 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 .ProseMirror:focus {
   background: var(--surface);
-  box-shadow: 0 0 0 2px var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--input-border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
@@ -513,12 +517,15 @@ html[data-theme='light'] .card-interactive:hover {
   background: var(--surface-card);
   box-shadow: var(--shadow-sm);
 }
-html[data-theme='light'] .input {
-  background: var(--input-bg);
+html[data-theme='light'] .input:focus,
+html[data-theme='light'] .ProseMirror:focus {
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.28);
 }
-html[data-theme='light'] .input:focus {
-  background: var(--surface);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+html[data-theme='dark'] .input:focus,
+html[data-theme='dark'] .ProseMirror:focus {
+  background: #1a1a22;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
 }
 html[data-theme='light'] .filter-tabs {
   background: rgba(255, 255, 255, 0.65);

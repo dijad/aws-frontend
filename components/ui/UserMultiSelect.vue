@@ -184,15 +184,17 @@ function onInputKeydown(event: KeyboardEvent) {
   gap: 0.375rem;
   min-height: 2.75rem;
   padding: 0.375rem 0.5rem 0.375rem 0.625rem;
-  background: var(--surface-card);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   cursor: text;
-  transition: box-shadow 0.15s, background 0.15s;
+  transition: box-shadow 0.15s, background 0.15s, border-color 0.15s;
 }
 .user-multi-select__control--open,
 .user-multi-select__control:focus-within {
   background: var(--surface);
-  box-shadow: 0 0 0 2px var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--input-border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 .user-multi-select__tags {
   display: flex;

@@ -19,6 +19,12 @@ const roleSearch = ref('');
 const permSearch = ref('');
 const selectedRoleId = ref<string | null>(null);
 const collapsedGroups = ref<Set<string>>(new Set());
+const showCreateModal = ref(false);
+const creating = ref(false);
+const newRole = reactive({
+  name: '',
+  description: '',
+});
 
 /** Permisos editados del rol seleccionado (copia local hasta guardar). */
 const draft = ref<Set<string>>(new Set());
@@ -66,6 +72,56 @@ const dirty = computed(() => {
 
 const draftCount = computed(() => draft.value.size);
 const totalCount = computed(() => permissions.value.length);
+
+function openCreateModal() {
+  if (dirty.value) {
+    const ok = confirm(
+      'This role has unsaved permission changes. Discard them and create a new role?',
+    );
+    if (!ok) return;
+  }
+  newRole.name = '';
+  newRole.description = '';
+  error.value = null;
+  showCreateModal.value = true;
+}
+
+function closeCreateModal() {
+  if (creating.value) return;
+  showCreateModal.value = false;
+}
+
+async function createRole() {
+  const name = newRole.name.trim();
+  if (!name) {
+    error.value = 'Name is required.';
+    return;
+  }
+  creating.value = true;
+  error.value = null;
+  try {
+    const created = await apiFetch<RoleDto>('/roles', {
+      method: 'POST',
+      body: {
+        name,
+        description: newRole.description.trim() || undefined,
+      },
+    });
+    roles.value = [...roles.value, created].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+    showCreateModal.value = false;
+    selectRole(created);
+    success.value = `Role “${created.name}” created. Assign permissions below.`;
+  } catch (e: unknown) {
+    error.value =
+      ((e as { data?: { message?: string } }).data?.message) ??
+      (e as Error).message ??
+      'Failed to create role';
+  } finally {
+    creating.value = false;
+  }
+}
 
 function selectRole(role: RoleDto) {
   if (dirty.value && selectedRoleId.value !== role.id) {
@@ -205,7 +261,12 @@ onMounted(load);
       <aside class="roles-sidebar card">
         <div class="sidebar-head">
           <h2 class="sidebar-title">Roles</h2>
-          <span class="badge">{{ roles.length }}</span>
+          <div class="sidebar-head__actions">
+            <span class="badge">{{ roles.length }}</span>
+            <button type="button" class="btn-primary text-xs" @click="openCreateModal">
+              New role
+            </button>
+          </div>
         </div>
         <div class="search-box sidebar-search">
           <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
@@ -391,6 +452,57 @@ onMounted(load);
         </div>
       </section>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="showCreateModal"
+        class="modal-overlay fixed inset-0 z-40 flex items-center justify-center p-4"
+        @click.self="closeCreateModal"
+      >
+        <div class="modal-panel w-full max-w-md p-6 space-y-4" role="dialog" aria-labelledby="create-role-title">
+          <div>
+            <h3 id="create-role-title" class="text-lg font-semibold" style="color: var(--ink-strong); letter-spacing: -0.02em">
+              New role
+            </h3>
+            <p class="text-sm mt-1" style="color: var(--ink-soft)">
+              Enter a name only — the system code is generated automatically. Assign permissions after creating.
+            </p>
+          </div>
+          <div>
+            <label class="label" for="new-role-name">Name</label>
+            <input
+              id="new-role-name"
+              v-model="newRole.name"
+              required
+              maxlength="80"
+              class="input"
+              placeholder="e.g. Quality Analyst"
+              autocomplete="off"
+            />
+          </div>
+          <div>
+            <label class="label" for="new-role-desc">Description (optional)</label>
+            <textarea
+              id="new-role-desc"
+              v-model="newRole.description"
+              rows="2"
+              maxlength="280"
+              class="input"
+              placeholder="What is this role for?"
+            />
+          </div>
+          <div v-if="error && showCreateModal" class="alert alert--error">{{ error }}</div>
+          <div class="flex justify-end gap-2">
+            <button type="button" class="btn-secondary" :disabled="creating" @click="closeCreateModal">
+              Cancel
+            </button>
+            <button type="button" class="btn-primary" :disabled="creating || !newRole.name.trim()" @click="createRole">
+              {{ creating ? 'Creating…' : 'Create role' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -424,6 +536,12 @@ onMounted(load);
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+}
+.sidebar-head__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
 }
 .sidebar-title {
   font-size: 0.9375rem;
